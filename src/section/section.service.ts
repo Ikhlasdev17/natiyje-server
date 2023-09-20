@@ -7,53 +7,84 @@ import { Section, SectionDocument } from './section.model'
 
 @Injectable()
 export class SectionService {
-  constructor(
-    @InjectModel(Section.name) private readonly sectionModel: Model<SectionDocument>,
-    @InjectModel(Course.name) private readonly courseModel: Model<CourseDocument>,
-  ) {}
+	constructor(
+		@InjectModel(Section.name)
+		private readonly sectionModel: Model<SectionDocument>,
+		@InjectModel(Course.name)
+		private readonly courseModel: Model<CourseDocument>
+	) {}
 
+	async createSection(body: SectionCreateDto, courseId: string) {
+		const newSection = await this.sectionModel.create(body)
 
-  async createSection(body: SectionCreateDto, courseId: string) {
-    const newSection = await this.sectionModel.create(body)
+		const updateCourse = await this.courseModel
+			.findByIdAndUpdate(
+				courseId,
+				{
+					$push: { sections: newSection._id },
+				},
+				{
+					new: true,
+				}
+			)
+			.populate('sections')
 
-    await newSection.save()
+		return updateCourse
+	}
 
-    const updateCourse = await this.courseModel.findByIdAndUpdate(courseId, {
-      $push: { sections: newSection._id }
-    }, {
-      new: true
-    })
+	async getCourseSections(courseId: string) {
+		try {
+			const course = await this.courseModel.findById(courseId).populate({
+				path: 'sections',
+				populate: { path: 'lessons' },
+			})
 
-    return updateCourse.populate("sections")
-  }
+			if (!course) throw new BadRequestException('Course not found!')
 
-  async getCourseSections(courseId: string) {
-    try {
-      const course = await this.courseModel.findById(courseId)
-      .populate({
-        path: "sections", populate: { path: "lessons" }
-      })
+			return course.sections
+		} catch (error) {
+			throw new BadRequestException('Course not found!')
+		}
+	}
 
-      if (!course) throw new BadRequestException("Course not found!")
+	async updateSection(body: SectionCreateDto, sectionId: string) {
+		if (sectionId.length !== '64f36598678e2bb984226224'.length)
+			throw new BadRequestException('Invalid section id!')
 
-      return course.sections
-    } catch (error) {
-       throw new BadRequestException("Course not found!")
-    }
-  }
+		const courseIsExist = await this.sectionModel.findById(sectionId)
 
-  async updateSection(body: SectionCreateDto, sectionId: string) {
+		if (!courseIsExist) throw new BadRequestException('Section not found!')
 
-    if (sectionId.length !== "64f36598678e2bb984226224".length) throw new BadRequestException("Invalid section id!")
+		const updateSection = await this.sectionModel.findByIdAndUpdate(
+			sectionId,
+			body,
+			{
+				new: true,
+			}
+		)
 
-    const courseIsExist = await this.sectionModel.findById(sectionId)
+		return updateSection
+	}
 
-    if (!courseIsExist) throw new BadRequestException("Section not found!")
+	async deleteSection(sectionId: string, courseId: string) {
+		await this.courseModel.findByIdAndUpdate(courseId, {
+			$pull: { sections: sectionId },
+		})
 
-    const updateSection = await this.sectionModel.findByIdAndUpdate(sectionId, body, {
-      new: true
-    })
+		const section = await this.sectionModel.findByIdAndRemove(sectionId)
 
-    return updateSection
-  }
+		return section
+	}
+
+	async changePosition(courseId: string, sections: string[]) {
+		const course = await this.courseModel.findByIdAndUpdate(
+			courseId,
+			{
+				$set: { sections: sections },
+			},
+			{ new: true }
+		)
+
+		return course
+	}
 }

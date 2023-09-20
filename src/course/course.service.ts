@@ -1,56 +1,166 @@
-import { Injectable } from '@nestjs/common'
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+} from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { Category, CategoryDocument } from 'src/category/category.model'
+import { SectionDocument } from 'src/section/section.model'
 import { User, UserDocument } from 'src/user/user.model'
 import { Course, CourseDocument } from './course.model'
 import { CreateCourseDto } from './dto/create-course-dto'
 
 @Injectable()
 export class CourseService {
-  constructor(
-    @InjectModel(Course.name) private readonly courseModel: Model<CourseDocument> ,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument> ,
-    
-    ) {}
+	constructor(
+		@InjectModel(Course.name)
+		private readonly courseModel: Model<CourseDocument>,
+		@InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+		@InjectModel(Category.name)
+		private readonly categoryModel: Model<CategoryDocument>
+	) {}
 
-  async create(body: CreateCourseDto, _id: string) {
+	async create(body: CreateCourseDto, _id: string) {
+		const author = await this.userModel.findById(_id)
+		const category = await this.categoryModel.findById(body.category)
 
-    const author = await this.userModel.findById(_id)
- 
- 
-    const newCourse = await this.courseModel.create({...body, author: author._id})
+		const newCourse = await this.courseModel.create({
+			...body,
+			author: author._id,
+			category: category._id,
+		})
 
-    await newCourse.save()
+		await newCourse.save()
 
-    return newCourse
-  }
+		return newCourse
+	}
 
-  async update(body: CreateCourseDto, courseId: string) {
-    const newCourse = await this.courseModel.findByIdAndUpdate(courseId, body, {new: true})
+	async update(body: CreateCourseDto, courseId: string) {
+		const newCourse = await this.courseModel.findByIdAndUpdate(courseId, body, {
+			new: true,
+		})
 
-    return newCourse
-  }
+		return newCourse
+	}
 
-  async getAllCourse() {
-    const courses = await this.courseModel.find()
-      .populate("author", "fullName _id avatar")
+	async getAllCourse() {
+		const courses = await this.courseModel
+			.find()
+			.populate('author', 'fullName _id avatar')
 
-    return courses
-  }
+		return courses
+	}
 
-  async activateCourse(courseId: string) {
-    const course = this.courseModel.findByIdAndUpdate(courseId, {
-      $set: { isActive: true }
-    }, {new: true}).exec()
+	async activateCourse(courseId: string) {
+		const course = this.courseModel
+			.findByIdAndUpdate(
+				courseId,
+				{
+					$set: { isActive: true },
+				},
+				{ new: true }
+			)
+			.exec()
 
-    return course
-  }
+		return course
+	}
 
-  async unActivateCourse(courseId: string) {
-    const course = this.courseModel.findByIdAndUpdate(courseId, {
-      $set: { isActive: false }
-    }, {new: true}).exec()
+	async unActivateCourse(courseId: string) {
+		const course = this.courseModel
+			.findByIdAndUpdate(
+				courseId,
+				{
+					$set: { isActive: false },
+				},
+				{ new: true }
+			)
+			.exec()
 
-    return course
-  }
+		return course
+	}
+
+	async getSingleCourse(id: string) {
+		const course = this.courseModel.findById(id)
+
+		if (!course) throw new BadRequestException('Course not found!')
+
+		return course
+	}
+
+	async getSingleCourseWithSlug(slug: string) {
+		const course = await this.courseModel
+			.findOne({ slug: slug })
+			.populate('author', '_id fullName avatar')
+			.populate({
+				path: 'sections',
+				populate: {
+					path: 'lessons',
+				},
+			})
+
+		if (!course) throw new BadRequestException('Course not found!')
+
+		const data = {
+			title: course.title,
+			description: course.description,
+			author: course.author,
+			price: course.price,
+			excerpt: course.excerpt,
+			learn: course.learn,
+			requirements: course.requirements,
+			tags: course.tags,
+			level: course.level,
+			isActive: course.isActive,
+			embedVideo: course.embedVideo,
+			slug: course.slug,
+			image: course.image,
+			_id: course._id,
+			sections: course.sections.map((item: SectionDocument) => ({
+				title: item.title,
+				_id: item._id,
+				lessons: item.lessons.map(lesson => {
+					if (lesson.isOpen) {
+						return lesson
+					} else {
+						return {
+							name: lesson.name,
+							minute: lesson.minute,
+							hour: lesson.hour,
+							second: lesson.second,
+						}
+					}
+				}),
+			})),
+		}
+
+		return data
+	}
+
+	async deleteCourse(courseId: string) {
+		await this.courseModel.findByIdAndRemove(courseId)
+		return 'success'
+	}
+
+	async fullCourse(slug: string, userId: string) {
+		const user = await this.userModel.findById(userId)
+
+		const course = await this.courseModel.findOne({ slug }).populate({
+			path: 'sections',
+			populate: {
+				path: 'lessons',
+				model: 'Lesson',
+			},
+		})
+
+		if (!course) return new BadRequestException('Course not found!')
+
+		if (
+			user.courses.findIndex(item => String(item) === String(course._id)) === -1
+		) {
+			return new ForbiddenException('Course not enrolled!')
+		}
+
+		return course
+	}
 }

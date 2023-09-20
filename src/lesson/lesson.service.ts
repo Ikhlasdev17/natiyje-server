@@ -57,4 +57,40 @@ export class LessonService {
 
 		return newSection
 	}
+
+	async changeLessonPosition(sectionId: string, lessons: string[]) {
+		const section = await this.sectionModel.findByIdAndUpdate(
+			sectionId,
+			{
+				$set: { lessons },
+			},
+			{ new: true }
+		)
+
+		return section
+	}
+
+	async openLessonSource(lessonId: string) {
+		const lesson = await this.lessonModel.findByIdAndUpdate(
+			lessonId,
+			{
+				$set: { isOpen: true },
+			},
+			{ new: true }
+		)
+
+		return lesson
+	}
+
+	async closeLessonSource(lessonId: string) {
+		const lesson = await this.lessonModel.findByIdAndUpdate(
+			lessonId,
+			{
+				$set: { isOpen: false },
+			},
+			{ new: true }
+		)
+
+		return lesson
+	}
 }

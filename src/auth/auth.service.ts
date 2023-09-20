@@ -1,7 +1,11 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
+import {
+	BadRequestException,
+	Injectable,
+	UnauthorizedException,
+} from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { InjectModel } from '@nestjs/mongoose'
-import * as bcrypt from "bcrypt"
+import * as bcrypt from 'bcrypt'
 import { Model } from 'mongoose'
 import { User, UserDocument } from 'src/user/user.model'
 import { LoginDto } from './dto/login-dto'
@@ -9,81 +13,120 @@ import { RegisterDto } from './dto/register-dto'
 import { TokenDto } from './dto/token-dto'
 @Injectable()
 export class AuthService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  private readonly jwtService: JwtService) {}
+	constructor(
+		@InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+		private readonly jwtService: JwtService
+	) {}
 
+	async register(body: RegisterDto) {
+		const isExistUser = await this.isExistUser(body.phone)
+		if (isExistUser) {
+			throw new BadRequestException(
+				'User with that phone number is already exist!'
+			)
+		}
 
-  async register(body: RegisterDto) {
-    const isExistUser = await this.isExistUser(body.phone)
-    if (isExistUser) {
-      throw new BadRequestException("User with that phone number is already exist!")
-    }
+		const hashedPass = await this.getHashedPass(body.password)
 
-    const hashedPass = await this.getHashedPass(body.password)
+		const newUser = await this.userModel.create({
+			...body,
+			password: hashedPass,
+		})
+		await newUser.save()
 
-    const newUser = await this.userModel.create({ ...body, password: hashedPass })
-    await newUser.save()
-    return newUser
-  }
+		const token = await this.issueTokenPair(newUser._id.toString())
 
-  async login(body: LoginDto) {
-    const isExistUser = await this.isExistUser(body.phone)
+		return { user: this.getSpecificUserData(newUser), ...token }
+	}
 
-    if (!isExistUser) throw new BadRequestException("User not found!")
+	async login(body: LoginDto) {
+		const isExistUser = await this.isExistUser(body.phone)
 
-    const compirePass = await bcrypt.compare(body.password, isExistUser.password)
+		if (!isExistUser) throw new BadRequestException('User not found!')
 
-    if (!compirePass) throw new BadRequestException("Password incorrect!")
+		const compirePass = await bcrypt.compare(
+			body.password,
+			isExistUser.password
+		)
 
-    const token = await this.issueTokenPair(isExistUser._id.toString())
+		if (!compirePass) throw new BadRequestException('Password incorrect!')
 
-    return { user: this.getSpecificUserData(isExistUser), ...token}
-  }
+		const token = await this.issueTokenPair(isExistUser._id.toString())
 
-  async getNewTokens({ refreshToken }: TokenDto) {
-    if (!refreshToken) throw new UnauthorizedException("Unauthenticated!")
+		return { user: this.getSpecificUserData(isExistUser), ...token }
+	}
 
-    const result = await this.jwtService.verifyAsync(refreshToken)
+	async getNewTokens({ refreshToken }: TokenDto) {
+		if (!refreshToken) throw new UnauthorizedException('Unauthenticated!')
 
-    if (!result) throw new UnauthorizedException("Invalid token, or expired!")
+		const result = await this.jwtService.verifyAsync(refreshToken)
 
-    const user = await this.userModel.findById(result._id)
+		if (!result) throw new UnauthorizedException('Invalid token, or expired!')
 
-    const token = await this.issueTokenPair(user._id?.toString())
+		const user = await this.userModel.findById(result._id).populate({
+			path: 'courses',
+			model: 'Course',
+			populate: {
+				path: 'author',
+				model: 'User',
+			},
+		})
 
-    return {user, ...token}
-  }
+		const token = await this.issueTokenPair(user._id?.toString())
 
-  async isExistUser(phone: string) {
-    const user = await this.userModel.findOne({ phone })  
-    return user
-  }
+		return { user: this.getSpecificUserData(user), ...token }
+	}
 
-  async getHashedPass(pass: string) {
-    const salt = await bcrypt.genSalt(10)
-    const hashesPass = await bcrypt.hash(pass, salt)
-    return hashesPass
-  }
+	async isExistUser(phone: string) {
+		const user = await this.userModel.findOne({ phone }).populate({
+			path: 'courses',
+			model: 'Course',
+			populate: {
+				path: 'author',
+				model: 'User',
+			},
+		})
+		return user
+	}
 
-  async issueTokenPair(userId: string) {
-    const data = { _id: userId }
+	async getHashedPass(pass: string) {
+		const salt = await bcrypt.genSalt(10)
+		const hashesPass = await bcrypt.hash(pass, salt)
+		return hashesPass
+	}
 
-    const refreshToken = await this.jwtService.signAsync(data, { expiresIn: '15d' })
+	async issueTokenPair(userId: string) {
+		const data = { _id: userId }
 
-    const accessToken = await this.jwtService.signAsync(data, { expiresIn: '3d' })
+		const refreshToken = await this.jwtService.signAsync(data, {
+			expiresIn: '15d',
+		})
 
-    return {
-      refreshToken,
-      accessToken
-    }
-  }
+		const accessToken = await this.jwtService.signAsync(data, {
+			expiresIn: '3d',
+		})
 
-  getSpecificUserData(user: UserDocument) {
-    return {
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      _id: user._id
-    }
-  }
+		return {
+			refreshToken,
+			accessToken,
+		}
+	}
+
+	getSpecificUserData(user: UserDocument) {
+		return {
+			fullName: user.fullName,
+			email: user.email,
+			phone: user.phone,
+			role: user.role,
+			avatar: user.avatar,
+			courses: user.courses || [],
+			createdAt: user.createdAt,
+			updatedAt: user.updatedAt,
+			coverImage: user.coverImage,
+			birthday: user.birthday,
+			bio: user.bio,
+			address: user.address,
+			_id: user._id,
+		}
+	}
 }

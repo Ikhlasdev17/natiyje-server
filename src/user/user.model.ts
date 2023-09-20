@@ -1,33 +1,55 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { HydratedDocument } from 'mongoose'
+import { HydratedDocument, Schema as SchemaMS } from 'mongoose'
+import { Article } from 'src/article/article.model'
+import { Course } from 'src/course/course.model'
 
 export type UserDocument = HydratedDocument<User>
 
-export type UserRoles = "USER" | "INSTRUCTOR" | "ADMIN" | "CEO"
+export type UserRoles = 'USER' | 'INSTRUCTOR' | 'ADMIN' | 'CEO'
 
-@Schema()
+@Schema({ timestamps: true })
 export class User {
-  @Prop({ required: true })
-  fullName: string
+	@Prop({ required: true })
+	fullName: string
 
-  @Prop({ required: true, unique: true })
-  phone: string
+	@Prop({ required: true, unique: true })
+	phone: string
 
-  @Prop({ required: true, minlength: 6 })
-  password: string
+	@Prop({ required: true, minlength: 6 })
+	password: string
 
-  @Prop()
-  email: string
+	@Prop()
+	email: string
 
-  @Prop()
-  avatar: string
+	@Prop()
+	avatar: string
 
-  @Prop()
-  address: string
+	@Prop({ default: '' })
+	address: string
 
-  @Prop()
-  role: UserRoles
+	@Prop({ default: 'USER' })
+	role: UserRoles
+
+	@Prop([{ type: SchemaMS.Types.ObjectId, ref: 'Course', unique: true }])
+	courses: Course[]
+
+	@Prop({ default: null })
+	coverImage: string
+
+	@Prop({ default: '' })
+	birthday: string
+
+	@Prop({ default: '' })
+	bio: string
+
+	@Prop({ type: SchemaMS.Types.ObjectId, ref: 'Article' })
+	articles: Article[]
+
+	@Prop()
+	createdAt: Date
+
+	@Prop()
+	updatedAt: Date
 }
-
 
 export const UserSchema = SchemaFactory.createForClass(User)

@@ -107,6 +107,34 @@ export class UserService {
 		return students.map(item => this.getSpecificUserData(item))
 	}
 
+	async getInstructors() {
+		const students = await this.userModel
+			.find({
+				$or: [{ role: 'INSTRUCTOR' }],
+			})
+			.populate({
+				path: 'courses',
+				model: 'Course',
+				select: ['_id', 'title', 'price'],
+			})
+
+		return students.map(item => this.getSpecificUserData(item))
+	}
+
+	async getAdmins() {
+		const students = await this.userModel
+			.find({
+				$or: [{ role: 'ADMIN' }],
+			})
+			.populate({
+				path: 'courses',
+				model: 'Course',
+				select: ['_id', 'title', 'price'],
+			})
+
+		return students.map(item => this.getSpecificUserData(item))
+	}
+
 	getSpecificUserData(user: UserDocument) {
 		return {
 			fullName: user.fullName,

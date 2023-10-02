@@ -69,4 +69,18 @@ export class UserController {
 	async students() {
 		return this.userService.getStudents()
 	}
+
+	@HttpCode(200)
+	@Get('instructors')
+	@Auth('ADMIN')
+	async instructors() {
+		return this.userService.getInstructors()
+	}
+
+	@HttpCode(200)
+	@Get('admins')
+	@Auth('CEO')
+	async admins() {
+		return this.userService.getAdmins()
+	}
 }

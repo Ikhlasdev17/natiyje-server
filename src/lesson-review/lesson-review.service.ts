@@ -40,13 +40,18 @@ export class LessonReviewService {
 	}
 
 	async findLessonReviews(lessonId: string) {
-		const reviews = await this.lessonReviewModel
-			.find({ lesson: lessonId })
-			.sort({
-				createdAt: -1,
-			})
-			.populate('author', '_id fullName avatar')
+		console.log(lessonId)
 
-		return reviews
+		if (lessonId.match(/^[0-9a-fA-F]{24}$/)) {
+			const reviews = await this.lessonReviewModel
+				.find({ lesson: lessonId })
+				.sort({
+					createdAt: -1,
+				})
+				.populate('author', '_id fullName avatar')
+
+			return reviews
+		}
+		return []
 	}
 }

@@ -7,6 +7,8 @@ export type UserDocument = HydratedDocument<User>
 
 export type UserRoles = 'USER' | 'INSTRUCTOR' | 'ADMIN' | 'CEO'
 
+import * as moongoosePaginate from 'mongoose-paginate'
+
 @Schema({ timestamps: true })
 export class User {
 	@Prop({ required: true })
@@ -52,4 +54,7 @@ export class User {
 	updatedAt: Date
 }
 
-export const UserSchema = SchemaFactory.createForClass(User)
+const UserSchema = SchemaFactory.createForClass(User)
+UserSchema.plugin(moongoosePaginate)
+
+export { UserSchema }

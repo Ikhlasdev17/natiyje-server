@@ -51,19 +51,25 @@ export class UserService {
 	async updateData(id: string, data: UserDocument) {
 		const { email, fullName, bio, birthday, address } = data
 
-		const user = await this.userModel.findByIdAndUpdate(
-			id,
-			{
-				$set: {
-					email,
-					fullName,
-					bio,
-					birthday,
-					address,
+		const user = await this.userModel
+			.findByIdAndUpdate(
+				id,
+				{
+					$set: {
+						email,
+						fullName,
+						bio,
+						birthday,
+						address,
+					},
 				},
-			},
-			{ new: true }
-		)
+				{ new: true }
+			)
+			.populate({
+				path: 'courses',
+				model: 'Course',
+				select: ['_id', 'title', 'price', 'image', 'author'],
+			})
 
 		return this.getSpecificUserData(user)
 	}
@@ -72,9 +78,6 @@ export class UserService {
 		const course = await this.courseModel.findById(courseId)
 
 		const user = await this.userModel.findById(userId)
-
-		console.log(course)
-		console.log(user)
 
 		if (
 			user.courses.findIndex(item => String(item) === String(course._id)) === -1
@@ -101,7 +104,7 @@ export class UserService {
 			.populate({
 				path: 'courses',
 				model: 'Course',
-				select: ['_id', 'title', 'price'],
+				select: ['_id', 'title', 'price', 'image'],
 			})
 
 		return students.map(item => this.getSpecificUserData(item))

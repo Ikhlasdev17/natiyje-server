@@ -12,6 +12,7 @@ import { SectionModule } from './section/section.module'
 import { UserModule } from './user/user.module'
 import { ArticleModule } from './article/article.module';
 import { LessonReviewModule } from './lesson-review/lesson-review.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
 	imports: [
@@ -31,6 +32,7 @@ import { LessonReviewModule } from './lesson-review/lesson-review.module';
 		CategoryModule,
 		ArticleModule,
 		LessonReviewModule,
+		SmsModule,
 	],
 })
 export class AppModule {}

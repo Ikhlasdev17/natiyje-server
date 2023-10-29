@@ -6,13 +6,13 @@ export type SmsDocument = HydratedDocument<Sms>
 @Schema({ timestamps: true })
 export class Sms {
 	@Prop()
-	email: string
+	phone: string
 
 	@Prop()
 	otp: string
 
 	@Prop()
-	expireIn: Date
+	expireAt: Date
 }
 
 export const SmsSchema = SchemaFactory.createForClass(Sms)

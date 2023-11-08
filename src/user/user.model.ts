@@ -47,6 +47,9 @@ export class User {
 	@Prop({ type: SchemaMS.Types.ObjectId, ref: 'Article' })
 	articles: Article[]
 
+	@Prop({ default: 0 })
+	balance: number
+
 	@Prop()
 	createdAt: Date
 

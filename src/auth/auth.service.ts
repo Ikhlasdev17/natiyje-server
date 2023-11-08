@@ -89,6 +89,14 @@ export class AuthService {
 		return user
 	}
 
+	async checkExistUser(phone: string) {
+		const isExist = await this.isExistUser(phone)
+
+		return {
+			isExist: isExist ? true : false,
+		}
+	}
+
 	async getHashedPass(pass: string) {
 		const salt = await bcrypt.genSalt(10)
 		const hashesPass = await bcrypt.hash(pass, salt)

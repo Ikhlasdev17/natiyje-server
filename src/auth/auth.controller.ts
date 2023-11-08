@@ -1,33 +1,46 @@
-import { Body, Controller, HttpCode, Post, UsePipes, ValidationPipe } from '@nestjs/common'
+import {
+	Body,
+	Controller,
+	HttpCode,
+	Post,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common'
 import { AuthService } from './auth.service'
+import { CheckUser } from './dto/check-user-dto'
 import { LoginDto } from './dto/login-dto'
 import { RegisterDto } from './dto/register-dto'
 import { TokenDto } from './dto/token-dto'
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService, 
-    ) {}
+	constructor(private readonly authService: AuthService) {}
 
-  @Post("register")
-  @HttpCode(200)
-  @UsePipes(new ValidationPipe())
-  async register(@Body() body: RegisterDto) {
-    return this.authService.register(body)
-  }
+	@Post('register')
+	@HttpCode(200)
+	@UsePipes(new ValidationPipe())
+	async register(@Body() body: RegisterDto) {
+		return this.authService.register(body)
+	}
 
-  @Post("login")
-  @HttpCode(200)
-  @UsePipes(new ValidationPipe())
-  async login(@Body() body: LoginDto) {
-    return this.authService.login(body)
-  }
+	@Post('login')
+	@HttpCode(200)
+	@UsePipes(new ValidationPipe())
+	async login(@Body() body: LoginDto) {
+		return this.authService.login(body)
+	}
 
-  @Post("access")
-  @HttpCode(200)
-  @UsePipes(new ValidationPipe())
-  async getNewTokens(@Body() body: TokenDto) {
-    return this.authService.getNewTokens(body)
-  }
+	@Post('access')
+	@HttpCode(200)
+	@UsePipes(new ValidationPipe())
+	async getNewTokens(@Body() body: TokenDto) {
+		return this.authService.getNewTokens(body)
+	}
+
+	@Post('exist-user')
+	@HttpCode(200)
+	@UsePipes(new ValidationPipe())
+	async checkExistUser(@Body() body: CheckUser) {
+		return this.authService.checkExistUser(body.phone)
+	}
 }

@@ -81,6 +81,10 @@ export class SmsService {
 
 		const currentSession = isExist.slice(-1)[0]
 
+		if (!currentSession) {
+			throw new ForbiddenException('Session not found!')
+		}
+
 		const compareOtp = await compare(otpCode, currentSession.otp)
 
 		if (!compareOtp) throw new ForbiddenException('Otp code incorrect!')

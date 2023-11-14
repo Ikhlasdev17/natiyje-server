@@ -11,6 +11,7 @@ import { compare, genSalt, hash } from 'bcrypt'
 import { Model } from 'mongoose'
 import { catchError, firstValueFrom } from 'rxjs'
 import { getSmsAuthURL, getSmsMessageURL } from 'src/helpers/api.constants'
+import { User, UserDocument } from 'src/user/user.model'
 import { Sms, SmsDocument } from './sms.model'
 
 @Injectable()
@@ -18,7 +19,8 @@ export class SmsService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly configService: ConfigService,
-		@InjectModel(Sms.name) private readonly smsModel: Model<SmsDocument>
+		@InjectModel(Sms.name) private readonly smsModel: Model<SmsDocument>,
+		@InjectModel(User.name) private readonly userModel: Model<UserDocument>
 	) {}
 
 	async sendSmsOtp(phone: string) {
@@ -39,6 +41,58 @@ export class SmsService {
 		formData.append(
 			'message',
 			`Natiyje.uz saytimizdan registratsiyadan o'tiw ushin kod: ${otp}`
+		)
+		formData.append('country_code', `998`)
+		formData.append('unicode', '0')
+
+		const responseSendSms = await firstValueFrom(
+			this.httpService
+				.post(getSmsMessageURL('sms/send'), formData, {
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				})
+				.pipe(
+					catchError((error: AxiosError) => {
+						throw new BadRequestException('Error with connect SMS service!')
+					})
+				)
+		)
+
+		const salt = await genSalt(10)
+		const hashedOtp = await hash(String(otp), salt)
+
+		await this.smsModel.create({
+			phone: phone,
+			otp: hashedOtp,
+			expireAt: Date.now() + 120000,
+		})
+
+		return responseSendSms.data
+	}
+
+	async sendSmsForgetPasswordOtp(phone: string) {
+		if (!phone)
+			throw new BadRequestException('Please enter phone for send OTP!')
+
+		const user = await this.userModel.findOne({ phone: '+' + phone })
+
+		if (!user) throw new BadRequestException('User not found!')
+
+		const response = await this.loginSmsService()
+
+		const token = response.data.token
+
+		if (!token) throw new ForbiddenException('Error with login sms API!')
+
+		const otp = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000
+
+		const formData = new FormData()
+
+		formData.append('mobile_phone', phone)
+		formData.append(
+			'message',
+			`Natiyje.uz saytimizdag'i parolin'izdi tiklew ushin kod: ${otp}`
 		)
 		formData.append('country_code', `998`)
 		formData.append('unicode', '0')

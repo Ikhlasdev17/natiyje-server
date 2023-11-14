@@ -97,6 +97,22 @@ export class AuthService {
 		}
 	}
 
+	async updateUserPassword(phone: string, password: string) {
+		const hashedPassword = await this.getHashedPass(password)
+
+		const user = await this.userModel.findOneAndUpdate(
+			{ phone },
+			{
+				$set: { password: hashedPassword },
+			},
+			{ new: true }
+		)
+
+		if (!user) throw new BadRequestException('User not found!')
+
+		return user
+	}
+
 	async getHashedPass(pass: string) {
 		const salt = await bcrypt.genSalt(10)
 		const hashesPass = await bcrypt.hash(pass, salt)

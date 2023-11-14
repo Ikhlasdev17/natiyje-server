@@ -11,6 +11,7 @@ import { CheckUser } from './dto/check-user-dto'
 import { LoginDto } from './dto/login-dto'
 import { RegisterDto } from './dto/register-dto'
 import { TokenDto } from './dto/token-dto'
+import { UpdatePasswordDto } from './dto/update-password-dto'
 
 @Controller('auth')
 export class AuthController {
@@ -42,5 +43,12 @@ export class AuthController {
 	@UsePipes(new ValidationPipe())
 	async checkExistUser(@Body() body: CheckUser) {
 		return this.authService.checkExistUser(body.phone)
+	}
+
+	@Post('update-password')
+	@HttpCode(200)
+	@UsePipes(new ValidationPipe())
+	async updatePassword(@Body() body: UpdatePasswordDto) {
+		return this.authService.updateUserPassword(body.phone, body.password)
 	}
 }

@@ -22,6 +22,9 @@ export class Course {
 	@Prop({ type: SchemaMS.Types.ObjectId, ref: 'User' })
 	author: User
 
+	@Prop({ type: SchemaMS.Types.ObjectId, ref: 'User' })
+	teacher: User
+
 	@Prop()
 	excerpt: string
 

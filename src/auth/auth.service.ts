@@ -3,6 +3,7 @@ import {
 	Injectable,
 	UnauthorizedException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { InjectModel } from '@nestjs/mongoose'
 import * as bcrypt from 'bcrypt'
@@ -15,8 +16,11 @@ import { TokenDto } from './dto/token-dto'
 export class AuthService {
 	constructor(
 		@InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-		private readonly jwtService: JwtService
-	) {}
+		private readonly jwtService: JwtService,
+		private readonly configService: ConfigService
+	) {
+		this.createDefaultCEO()
+	}
 
 	async register(body: RegisterDto) {
 		const isExistUser = await this.isExistUser(body.phone)
@@ -37,6 +41,29 @@ export class AuthService {
 		const token = await this.issueTokenPair(newUser._id.toString())
 
 		return { user: this.getSpecificUserData(newUser), ...token }
+	}
+
+	async createDefaultCEO() {
+		const CEO = await this.userModel.findOne({
+			phone: this.configService.get('ceo_phone'),
+		})
+
+		if (!CEO) {
+			const hashedPass = await this.getHashedPass(
+				this.configService.get('ceo_password')
+			)
+
+			const newUser = await this.userModel.create({
+				phone: this.configService.get('ceo_phone'),
+				password: hashedPass,
+				fullName: 'CEO',
+				role: 'CEO',
+			})
+
+			await newUser.save()
+
+			console.log('CEO CREATED SUCCESSFULL!')
+		}
 	}
 
 	async login(body: LoginDto) {

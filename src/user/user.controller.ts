@@ -6,9 +6,13 @@ import {
 	Param,
 	Post,
 	Put,
+	Query,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common'
 import { Auth } from 'src/auth/decorators/auth.decorator'
 import { User } from './decorators/user.decorator'
+import { CreateUserDto } from './dto/create-user-dto'
 import { UserDocument } from './user.model'
 import { UserService } from './user.service'
 
@@ -82,5 +86,25 @@ export class UserController {
 	@Auth('CEO')
 	async admins() {
 		return this.userService.getAdmins()
+	}
+
+	@HttpCode(200)
+	@Get('all')
+	@Auth('ADMIN')
+	async users(@Query() queries: any) {
+		return this.userService.getUsers(queries.roles)
+	}
+
+	@HttpCode(200)
+	@Post('create-user')
+	@Auth('ADMIN')
+	@UsePipes(new ValidationPipe())
+	async createUser(@Body() body: CreateUserDto) {
+		return this.userService.createUserByAdmin(
+			body.fullName,
+			body.phone,
+			body.password,
+			body.role
+		)
 	}
 }

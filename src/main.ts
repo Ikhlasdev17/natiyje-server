@@ -7,6 +7,10 @@ async function bootstrap() {
 		cors: true,
 	})
 	app.setGlobalPrefix('api')
-	await app.listen(8000)
+	await app.listen(8000, () => {
+		console.log(
+			'🚀🚀 Project started successfully on port: http://localhost:8000'
+		)
+	})
 }
 bootstrap()

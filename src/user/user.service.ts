@@ -5,15 +5,19 @@ import {
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { AuthService } from 'src/auth/auth.service'
 import { Course, CourseDocument } from 'src/course/course.model'
-import { User, UserDocument } from './user.model'
+import { SmsService } from 'src/sms/sms.service'
+import { User, UserDocument, UserRoles } from './user.model'
 
 @Injectable()
 export class UserService {
 	constructor(
 		@InjectModel(User.name) private readonly userModel: Model<UserDocument>,
 		@InjectModel(Course.name)
-		private readonly courseModel: Model<CourseDocument>
+		private readonly courseModel: Model<CourseDocument>,
+		private readonly authService: AuthService,
+		private readonly smsService: SmsService
 	) {}
 
 	async profile(userId: string) {
@@ -136,6 +140,56 @@ export class UserService {
 			})
 
 		return students.map(item => this.getSpecificUserData(item))
+	}
+
+	async getUsers(role: UserRoles = 'USER') {
+		const users = await this.userModel
+			.find({
+				role: {
+					$in: role.split('|'),
+				},
+			})
+			.populate({
+				path: 'courses',
+				model: 'Course',
+				select: ['_id', 'title', 'price'],
+			})
+
+		return users.map(item => this.getSpecificUserData(item))
+	}
+
+	async createUserByAdmin(
+		fullName: string,
+		phone: string,
+		password: string,
+		role: string
+	) {
+		const user = await this.authService.isExistUser(phone)
+
+		if (user)
+			throw new BadRequestException('User with this phone is already exist!')
+
+		const hashedPass = await this.authService.getHashedPass(password)
+
+		const newUser = await this.userModel.create({
+			phone,
+			fullName,
+			password: hashedPass,
+			role,
+		})
+
+		await newUser.save()
+
+		await this.smsService.sendSimpleSms(
+			phone,
+			"Qutliqlaymiz! Natiyje.uz saytinan dizimnen o'tkerildin'iz! \nTelefon: " +
+				phone +
+				'\nParol: ' +
+				password +
+				''
+		)
+
+		return newUser
 	}
 
 	getSpecificUserData(user: UserDocument) {

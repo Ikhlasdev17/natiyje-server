@@ -15,9 +15,9 @@ export class CreateCourseDto {
 	@IsString()
 	level: string
 	@IsString()
-	category: string
-	@IsString()
 	image: string
 	@IsString()
 	embedVideo: string
+	@IsString()
+	teacher: string
 }

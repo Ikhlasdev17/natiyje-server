@@ -32,7 +32,13 @@ export class User {
 	@Prop({ default: 'USER' })
 	role: UserRoles
 
-	@Prop([{ type: SchemaMS.Types.ObjectId, ref: 'Course', unique: true }])
+	@Prop([
+		{
+			type: SchemaMS.Types.ObjectId,
+			ref: 'Course',
+			default: [],
+		},
+	])
 	courses: Course[]
 
 	@Prop({ default: null })

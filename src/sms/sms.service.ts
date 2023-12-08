@@ -123,6 +123,40 @@ export class SmsService {
 		return responseSendSms.data
 	}
 
+	async sendSimpleSms(phone: string, msg: string) {
+		if (!phone)
+			throw new BadRequestException('Please enter phone for send OTP!')
+
+		const response = await this.loginSmsService()
+
+		const token = response.data.token
+
+		if (!token) throw new ForbiddenException('Error with login sms API!')
+
+		const formData = new FormData()
+
+		formData.append('mobile_phone', phone.split('+').join(''))
+		formData.append('message', msg)
+		formData.append('country_code', `998`)
+		formData.append('unicode', '0')
+
+		const responseSendSms = await firstValueFrom(
+			this.httpService
+				.post(getSmsMessageURL('sms/send'), formData, {
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				})
+				.pipe(
+					catchError((error: AxiosError) => {
+						throw new BadRequestException('Error with connect SMS service!')
+					})
+				)
+		)
+
+		return responseSendSms
+	}
+
 	async verifyOtp(otpCode: string, phone: string) {
 		if (!otpCode)
 			throw new BadRequestException('Please send OTP verification code!')

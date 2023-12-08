@@ -23,12 +23,14 @@ export class CourseService {
 
 	async create(body: CreateCourseDto, _id: string) {
 		const author = await this.userModel.findById(_id)
-		const category = await this.categoryModel.findById(body.category)
+		const teacher = await this.userModel.findById(body.teacher)
+		// const category = await this.categoryModel.findById(body.category || '')
 
 		const newCourse = await this.courseModel.create({
 			...body,
 			author: author._id,
-			category: category._id,
+			category: '1',
+			teacher: teacher._id,
 		})
 
 		await newCourse.save()
@@ -45,9 +47,16 @@ export class CourseService {
 	}
 
 	async getAllCourse() {
-		const courses = await this.courseModel
-			.find()
-			.populate('author', 'fullName _id avatar')
+		const courses = await this.courseModel.find().populate([
+			{
+				path: 'author',
+				select: 'fullName _id avatar',
+			},
+			{
+				path: 'teacher',
+				select: 'fullName _id avatar',
+			},
+		])
 
 		return courses
 	}
@@ -116,6 +125,7 @@ export class CourseService {
 			slug: course.slug,
 			image: course.image,
 			_id: course._id,
+			teacher: course.teacher,
 			sections: course.sections.map((item: SectionDocument) => ({
 				title: item.title,
 				_id: item._id,

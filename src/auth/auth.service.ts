@@ -90,14 +90,16 @@ export class AuthService {
 
 		if (!result) throw new UnauthorizedException('Invalid token, or expired!')
 
-		const user = await this.userModel.findById(result._id).populate({
-			path: 'courses',
-			model: 'Course',
-			populate: {
-				path: 'author',
-				model: 'User',
+		const user = await this.userModel.findById(result._id).populate([
+			{
+				path: 'courses',
+				model: 'Course',
+				populate: {
+					path: 'teacher',
+					model: 'User',
+				},
 			},
-		})
+		])
 
 		const token = await this.issueTokenPair(user._id?.toString())
 

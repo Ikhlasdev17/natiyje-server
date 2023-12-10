@@ -86,4 +86,21 @@ export class CourseController {
 	) {
 		return this.courseService.fullCourse(slug, userId)
 	}
+
+	@HttpCode(200)
+	@Get('course-students/:courseId')
+	@Auth('INSTRUCTOR')
+	async getCourseStudents(@Param('courseId') courseId: string) {
+		return this.courseService.getCourseStudents(courseId)
+	}
+
+	@HttpCode(200)
+	@Post('add-students/:courseId/:studentId')
+	@Auth('INSTRUCTOR')
+	async addStudentToCourse(
+		@Param('courseId') courseId: string,
+		@Param('studentId') studentId: string
+	) {
+		return this.courseService.addUserToCourse(courseId, studentId)
+	}
 }

@@ -13,6 +13,7 @@ import {
 import { Auth } from 'src/auth/decorators/auth.decorator'
 import { User } from './decorators/user.decorator'
 import { CreateUserDto } from './dto/create-user-dto'
+import { UpdateUserDto } from './dto/update-user-dto'
 import { UserDocument } from './user.model'
 import { UserService } from './user.service'
 
@@ -106,5 +107,16 @@ export class UserController {
 			body.password,
 			body.role
 		)
+	}
+
+	@HttpCode(200)
+	@Put('update-user/:userId')
+	@Auth('ADMIN')
+	@UsePipes(new ValidationPipe())
+	async updateUser(
+		@Body() body: UpdateUserDto,
+		@Param('userId') userId: string
+	) {
+		return this.userService.updateUserByAdmin(body, userId)
 	}
 }

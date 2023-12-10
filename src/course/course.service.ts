@@ -173,4 +173,34 @@ export class CourseService {
 
 		return course
 	}
+
+	async getCourseStudents(courseId: string) {
+		const courseUsers = await this.userModel.find({
+			courses: courseId,
+		})
+
+		return courseUsers
+	}
+
+	async addUserToCourse(courseId: string, userId: string) {
+		const course = await this.courseModel.findById(courseId)
+
+		const user = await this.userModel.findById(userId)
+
+		if (
+			user.courses.findIndex(item => String(item) === String(course._id)) === -1
+		) {
+			await user.updateOne(
+				{
+					$push: {
+						courses: course,
+					},
+				},
+				{ new: true }
+			)
+			return course
+		} else {
+			return new BadRequestException('Course already enroled!')
+		}
+	}
 }

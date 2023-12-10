@@ -8,6 +8,7 @@ import { Model } from 'mongoose'
 import { AuthService } from 'src/auth/auth.service'
 import { Course, CourseDocument } from 'src/course/course.model'
 import { SmsService } from 'src/sms/sms.service'
+import { CreateUserDto } from './dto/create-user-dto'
 import { User, UserDocument, UserRoles } from './user.model'
 
 @Injectable()
@@ -29,25 +30,47 @@ export class UserService {
 	}
 
 	async changeCover(id: string, coverImage: string) {
-		const user = await this.userModel.findByIdAndUpdate(
-			id,
-			{
-				$set: { coverImage: coverImage },
-			},
-			{ new: true }
-		)
+		const user = await this.userModel
+			.findByIdAndUpdate(
+				id,
+				{
+					$set: { coverImage: coverImage },
+				},
+				{ new: true }
+			)
+			.populate([
+				{
+					path: 'courses',
+					model: 'Course',
+					populate: {
+						path: 'teacher',
+						model: 'User',
+					},
+				},
+			])
 
 		return this.getSpecificUserData(user)
 	}
 
 	async avatarCover(id: string, avatar: string) {
-		const user = await this.userModel.findByIdAndUpdate(
-			id,
-			{
-				$set: { avatar: avatar },
-			},
-			{ new: true }
-		)
+		const user = await this.userModel
+			.findByIdAndUpdate(
+				id,
+				{
+					$set: { avatar: avatar },
+				},
+				{ new: true }
+			)
+			.populate([
+				{
+					path: 'courses',
+					model: 'Course',
+					populate: {
+						path: 'teacher',
+						model: 'User',
+					},
+				},
+			])
 
 		return this.getSpecificUserData(user)
 	}
@@ -190,6 +213,20 @@ export class UserService {
 		)
 
 		return newUser
+	}
+
+	async updateUserByAdmin(data: CreateUserDto, id: string) {
+		const user = await this.userModel.findByIdAndUpdate(
+			id,
+			{
+				$set: data,
+			},
+			{ new: true }
+		)
+
+		if (!user) throw new BadRequestException('User not found!')
+
+		return user
 	}
 
 	getSpecificUserData(user: UserDocument) {

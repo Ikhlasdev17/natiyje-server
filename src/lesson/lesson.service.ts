@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
+import { Model, isValidObjectId } from 'mongoose'
 import { Section, SectionDocument } from 'src/section/section.model'
 import { LessonCreateDto } from './dto/lesson-dto'
 import { Lesson, LessonDocument } from './lesson.model'
@@ -90,6 +90,25 @@ export class LessonService {
 			},
 			{ new: true }
 		)
+
+		return lesson
+	}
+
+	async completeLesson(lessonId: string, userId: string) {
+		if (!isValidObjectId(lessonId))
+			throw new BadRequestException('Lesson id is invalid!')
+
+		const lesson = await this.lessonModel.findById(lessonId)
+
+		if (!lesson) throw new BadRequestException('Lesson not found!')
+
+		if (!lesson.completed.find(x => x == String(userId))) {
+			lesson.completed.push(userId)
+		} else {
+			lesson.completed = lesson.completed.filter(x => x !== String(userId))
+		}
+
+		await lesson.save()
 
 		return lesson
 	}

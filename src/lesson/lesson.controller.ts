@@ -9,6 +9,7 @@ import {
 	ValidationPipe,
 } from '@nestjs/common'
 import { Auth } from 'src/auth/decorators/auth.decorator'
+import { User } from 'src/user/decorators/user.decorator'
 import { LessonCreateDto } from './dto/lesson-dto'
 import { LessonService } from './lesson.service'
 
@@ -61,5 +62,15 @@ export class LessonController {
 	@Auth('INSTRUCTOR')
 	async closeLessonSource(@Param('lessonId') lessonId: string) {
 		return this.lessonService.closeLessonSource(lessonId)
+	}
+
+	@HttpCode(200)
+	@Put('complete/:lessonId')
+	@Auth()
+	async lessonComplete(
+		@Param('lessonId') lessonId: string,
+		@User('_id') userId: string
+	) {
+		return this.lessonService.completeLesson(lessonId, userId)
 	}
 }

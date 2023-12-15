@@ -1,8 +1,6 @@
-import { CacheModule } from '@nestjs/cache-manager'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
-import { redisStore } from 'cache-manager-redis-yet'
 import { ArticleModule } from './article/article.module'
 import { CategoryModule } from './category/category.module'
 import { ClickModule } from './click/click.module'
@@ -39,17 +37,6 @@ import { UserModule } from './user/user.module'
 		ClickModule,
 		PaymentModule,
 		CouponModule,
-		CacheModule.registerAsync({
-			isGlobal: true,
-			useFactory: async () => ({
-				store: await redisStore({
-					socket: {
-						port: 6379,
-						host: 'localhost',
-					},
-				}),
-			}),
-		}),
 	],
 })
 export class AppModule {}

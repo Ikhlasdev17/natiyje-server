@@ -7,6 +7,7 @@ import { ClickService } from 'src/click/click.service'
 import { Coupon, CouponSchema } from 'src/coupon/coupon.model'
 import { Course, CourseSchema } from 'src/course/course.model'
 import { PaymentController } from './payment.controller'
+import { Payment, PaymentSchema } from './payment.model'
 import { PaymentService } from './payment.service'
 
 @Module({
@@ -23,6 +24,10 @@ import { PaymentService } from './payment.service'
 			{
 				name: Coupon.name,
 				schema: CouponSchema,
+			},
+			{
+				name: Payment.name,
+				schema: PaymentSchema,
 			},
 		]),
 	],

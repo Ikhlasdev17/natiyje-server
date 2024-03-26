@@ -155,11 +155,30 @@ export class CourseService {
 	async fullCourse(slug: string, userId: string) {
 		const user = await this.userModel.findById(userId)
 
+		// const course = await this.courseModel.findOne({ slug }).populate([
+		// 	{
+		// 		path: 'sections',
+		// 		model: 'Section',
+		// 	},
+		// 	{
+		// 		path: 'lessons',
+		// 		model: 'Lesson',
+		// 	},
+		// 	{
+		// 		path: 'teacher',
+		// 		model: 'User',
+		// 	},
+		// ])
+
 		const course = await this.courseModel.findOne({ slug }).populate({
 			path: 'sections',
 			populate: {
 				path: 'lessons',
 				model: 'Lesson',
+				// populate: {
+				// 	path: 'teacher',
+				// 	model: 'User',
+				// },
 			},
 		})
 

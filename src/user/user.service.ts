@@ -92,11 +92,16 @@ export class UserService {
 				},
 				{ new: true }
 			)
-			.populate({
-				path: 'courses',
-				model: 'Course',
-				select: ['_id', 'title', 'price', 'image', 'author'],
-			})
+			.populate([
+				{
+					path: 'courses',
+					model: 'Course',
+					populate: {
+						path: 'teacher',
+						model: 'User',
+					},
+				},
+			])
 
 		return this.getSpecificUserData(user)
 	}

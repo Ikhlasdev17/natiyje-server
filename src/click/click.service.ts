@@ -16,15 +16,18 @@ export class ClickService {
 		private readonly configService: ConfigService
 	) {}
 
-	async createInvoice(amount: number, phone_number: string) {
-		const merchant_id = this.configService.getOrThrow('click_merchant_id')
+	async createInvoice(
+		amount: number,
+		phone_number: string,
+		merchant_trans_id: string
+	) {
 		const service_id = this.configService.getOrThrow('click_service_id')
 
 		const response = await firstValueFrom(
 			this.httpService.post<ClickCreateInvoiceResponseType>(
 				getClickBaseUrl(`merchant/invoice/create`),
 				{
-					merchant_trans_id: merchant_id,
+					merchant_trans_id: merchant_trans_id,
 					service_id: service_id,
 					amount: amount,
 					phone_number: phone_number,

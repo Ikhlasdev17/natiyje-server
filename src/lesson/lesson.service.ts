@@ -37,22 +37,12 @@ export class LessonService {
 		lessonId: string,
 		sectionId: string
 	) {
-		const section = await this.sectionModel.findById(sectionId)
-
-		const oldLessons = section.lessons
-
-		const newLesson = await this.lessonModel.findByIdAndUpdate(lessonId, body, {
+		await this.lessonModel.findByIdAndUpdate(lessonId, body, {
 			new: true,
 		})
 
 		const newSection = await this.sectionModel
-			.findByIdAndUpdate(
-				sectionId,
-				{
-					$set: { lessons: oldLessons },
-				},
-				{ new: true }
-			)
+			.findById(sectionId)
 			.populate('lessons')
 
 		return newSection

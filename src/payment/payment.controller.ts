@@ -11,7 +11,11 @@ import {
 import { Auth } from 'src/auth/decorators/auth.decorator'
 import { ClickService } from 'src/click/click.service'
 import { User } from 'src/user/decorators/user.decorator'
-import { PaymentCreateDto, PaymentTypes } from './dto/payment-dto'
+import {
+	PaymentCreateDto,
+	PaymentTypes,
+	PreparePaymentDto,
+} from './dto/payment-dto'
 import { PaymentService } from './payment.service'
 
 @Controller('payment')
@@ -54,14 +58,14 @@ export class PaymentController {
 
 	@HttpCode(200)
 	@Auth()
-	@Get('/click-api/prepare')
-	async prepareClick() {
-		return await this.paymentService.prepareClickPayment()
+	@Post('/click-api/prepare')
+	async prepareClick(@Body() body: PreparePaymentDto) {
+		return await this.paymentService.prepareClickPayment(body)
 	}
 
 	@HttpCode(200)
 	@Auth()
-	@Get('/click-api/complete')
+	@Post('/click-api/complete')
 	async completeClick() {
 		return await this.paymentService.completeClickPayment()
 	}

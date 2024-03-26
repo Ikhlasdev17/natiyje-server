@@ -1,5 +1,5 @@
-import { Prop, Schema } from '@nestjs/mongoose'
-import { Schema as SchemaMS } from 'mongoose'
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { HydratedDocument, Schema as SchemaMS } from 'mongoose'
 import { Course } from 'src/course/course.model'
 import { PaymentTypes } from './dto/payment-dto'
 
@@ -13,12 +13,18 @@ export enum PaymentStatuses {
 	ERROR = 'error',
 }
 
+export type PaymentDocument = HydratedDocument<Payment>
+
 @Schema({ timestamps: true })
 export class Payment {
-	@Prop({ type: 'enum', default: PaymentTypes.CLICK })
+	@Prop({ default: PaymentTypes.CLICK })
 	payment_type: PaymentTypes
 
-	@Prop({ type: 'enum', default: PaymentStatuses.INPUT })
+	@Prop({
+		type: String,
+		enum: PaymentStatuses,
+		default: PaymentStatuses.INPUT,
+	})
 	status: PaymentStatuses
 
 	@Prop()
@@ -30,3 +36,5 @@ export class Payment {
 	@Prop([{ type: SchemaMS.Types.ObjectId, ref: 'Course' }])
 	course_id: Course
 }
+
+export const PaymentSchema = SchemaFactory.createForClass(Payment)
